@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!-- vim: set ts=2 expandtab: -->
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2818 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2818.xml">
+<!ENTITY RFC3986 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3986.xml">
+<!ENTITY RFC4648 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4648.xml">
+<!ENTITY RFC4944 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4944.xml">
+<!ENTITY RFC5055 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5055.xml">
+<!ENTITY RFC5234 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5234.xml">
+<!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
+<!ENTITY RFC6066 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6066.xml">
+<!ENTITY RFC7043 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7043.xml">
+<!ENTITY RFC7252 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7252.xml">
+<!ENTITY I-D.ietf-core-resource-directory SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-core-resource-directory-02.xml">
+<!ENTITY I-D.ietf-lwig-tls-minimal SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-lwig-tls-minimal-01.xml">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<rfc category="std" docName="draft-fossati-core-certmode-rd-names-00" ipr="trust200902">
+  <front>
+    <title abbrev="RD Names for Certificate Mode DTLS">
+      Resource Directory Names for Certificate Mode DTLS
+    </title>
+    <author fullname="Thomas Fossati" initials="T.F." surname="Fossati">
+      <organization>Alcatel-Lucent</organization>
+      <address>
+        <postal>
+          <street>3 Ely Road</street>
+          <city>Milton, Cambridge</city>
+          <code>CB24 6DD</code>
+          <country>Great Britain</country>
+        </postal>
+        <email>thomas.fossati@alcatel-lucent.com</email>
+      </address>
+    </author>
+
+    <author fullname="Hannes Tschofenig" initials="H.T." surname="Tschofenig">
+      <organization>ARM Ltd.</organization>
+      <address>
+        <postal>
+          <street>110 Fulbourn Rd</street>
+          <city>Cambridge</city>
+          <code>CB1 9NJ</code>
+          <country>Great Britain</country>
+        </postal>
+        <email>Hannes.tschofenig@gmx.net </email>
+        <uri>http://www.tschofenig.priv.at</uri>
+      </address>
+    </author>
+
+    <date year="2015" month="January" />
+
+    <area>General</area>
+    <workgroup>Internet Engineering Task Force</workgroup>
+
+    <keyword>CoAP, TLS, coaps</keyword>
+
+    <abstract>
+      <t>This memo describes the use of Resource Directory names in CoAP Certificate Mode DTLS for the purpose of verifying the identity of a server by a client endpoint.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Terminology and Requirements Language">
+      <t>This specification requires the reader to be familiar with the terminology used in documents produced by the CoRE, TLS, and PKIX working groups.</t>
+
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119" />.</t>
+    </section>  <!-- Terminology and Requirements Language -->
+
+    <section title="Motivation and Scope">
+      <t>According to Section 9.1.3.3 of <xref target="RFC7252" />, a client, when presented with a certificate carrying the identity of the server in the SubjectAltName (SAN), must check that the authority of the requested URI matches at least one of the authority names of any CoAP URI found in a field of URI type in the SAN set.</t>
+
+      <t>According to Section 4.2.1.6 of <xref target="RFC5280" /> an URI that includes an authority - such as a 'coaps' URI - needs to include a fully qualified domain name (FQDN), or an IP literal as its host part.</t>
+
+      <t>The combination of the two requirements above, together with text in Section 3 of <xref target="RFC6066" /> which only allows FQDN hostname of the server in the ServerName field, basically binds Certificate Mode DTLS to either DNS, or static host tables containing FQDN's mappings, or some other system for lookup of registered names which is able to fully mimic the DNS naming scheme.</t>
+
+      <t>Because DNS is not mandatory to implement in CoAP networks, and static configuration is not generally a viable option, there is a need to define some kind of stable, non-DNS, identifier that can be used for 'coaps' URIs in Certificate Mode DTLS as a fall-back in case DNS is not deployed, or not understood by CoAP endpoints.</t>
+
+      <t>The purpose of this memo is to describe syntax and rules for using Resource Directory endpoint names (and domains) <xref target="I-D.ietf-core-resource-directory" /> as an alternative to DNS names in the above said context.</t>
+
+      <t>This memo contains updates to <xref target="RFC7252" />, <xref target="RFC6066" />, and <xref target="RFC5280" />.</t>
+    </section>  <!-- Motivation -->
+
+    <section title="Resource Directory Names and Domains">
+      <t>In CoAP networks, a Resource Directory (RD) <xref target="I-D.ietf-core-resource-directory" /> is an entity that acts as a centralised store where protocol endpoints can register and lookup links to resources that are made available in the network.  The RD defines the concept of an "endpoint name" which identifies a given Endpoint (i.e. web server) within a given "domain".  Under the assumption of its uniqueness, an endpoint name/domain can be used as a stable host component for CoAP authorities.</t>
+      <section title="Uniqueness Guarantee">
+        <t>An endpoint name is guaranteed to be unique within the associated domain.  If the domain is elided during registration, the RD should assure its uniqueness within an implicit default domain.</t> 
+        <!--
+        <cref>Check with RD authors: allow an empty default domain?  In which case, modify the ABNF to allow authorities like "node2.:12345"</cref>.
+        -->
+      </section>
+      <section title="Authority Format" anchor="RD-format">
+        <section title="Requirements">
+        <t>The syntax for RD name authorities has been designed to satisfy the following requirements:
+          <list style="hanging" hangIndent="8">
+            <t hangText="REQ#1:">full compatibility with URI reg-name syntax;</t>
+            <t hangText="REQ#2:">support identifiers from different and independently administered sources (e.g. those defined in OMA spec, EUI-64 <xref target="EUI-64"/>, etc.);</t>
+            <t hangText="REQ#3:">allow for an optional "domain" under which a given name exists (for compatibility with current RD spec).</t>
+          </list>
+        </t>
+        </section>
+        <section title="Syntax">
+          <t>The following ABNF reuses 'port' from <xref target="RFC3986" />; ALPHA and DIGIT from <xref target="RFC5234" />.</t>
+          <figure>
+            <artwork align="center"><![CDATA[
+  RD-char = ALPHA / DIGIT / "-" / "_" / "~" / "!" /
+            "$" / "&" / "'" / "(" / ")" / "*" /
+            "," / ";" / "="
+  RD-ns = ALPHA *(ALPHA / DIGIT / "-")  ; the name-space
+  RD-name = 1*RD-char
+  RD-domain = 1*63RD-char
+  RD-authority = [ RD-ns "+" ] RD-name [ "." RD-domain ] [ ":" port ]
+            ]]></artwork>
+          </figure>
+          <t>Note that RD-char is the set of chars allowed in reg-name (REQ#1) from which the two following characters have been removed:
+            <list style="symbols"> 
+              <t>the dot ("."), which is used to introduce the domain component (REQ#3);</t>
+              <t>the plus ("+"), which is used to encode namespace information along with the name in an unambiguous way (REQ#2).</t>
+            </list>   
+          </t>
+          <t>If RD-ns is present, then the length of RD-ns and RD-name MUST be less then 63 chars.</t>
+          <t>Percent encoding MUST NOT be used if not needed, i.e. it can be used only to encode non otherwise allowed chars.</t>
+        </section>
+        <section title="Examples">
+          <t>
+            <list style="symbols">
+              <t>eui-64+01-23-45-67-89-ab-cd-ef</t>
+              <t>imei+123456789012345</t>
+              <t>imei+123456789012345:9876</t>
+              <t>uuid+64d5ecfa-addc-4695-ac6e-36e8b18de4b9</t>
+              <t>eui-64+01-23-45-67-89-ab-cd-ef.local:1234</t>
+              <t>name.domain:1234</t>
+            </list>
+          </t>
+        </section>
+        <section title="Uri-Host and Uri-Port Considerations" anchor="Implicit-Option-Values">
+          <t>When RD-authority is used in a 'coaps' URI, its value is the same as the ServerName.name included (and successfully validated) by the client in the associated DTLS handshake (see <xref target="RD-SNI" />).</t>
+          <t>Hence, there is no need to include explicit Uri-Host and Uri-Port Options in requests associated to the same security context <cref>This updates Sections 6.4 and 6.5 of [RFC7252]</cref>.</t>
+          <t>If any of Uri-Host or Uri-Port is included in the request, then its value MUST match the corresponding value set in the established security context.</t>
+        </section>
+      </section>
+
+      <section title="SNI Name Type and Server Name Syntax" anchor="RD-SNI">
+        <t>In order to encode RD authorities in a ServerNameList, the extension_data field of the server_name extension is expanded to allow a RDAuthority in a ServerName:</t>
+        <figure>
+          <artwork align="center"><![CDATA[
+struct {
+    NameType name_type;
+    select (name_type) {
+        case host_name: HostName;
+        case rd_authority: RDAuthority;
+    } name;
+} ServerName;
+
+enum {
+    host_name(0),
+    rd_authority(1),
+    (255)
+} NameType;
+
+opaque RDAuthority<1..2^16-1>;
+          ]]></artwork>
+        </figure>
+        <t>RDAuthority, the data structure associated with the rd_authority NameType, is a variable-length vector that begins with a 16-bit length field indicating the length of the following RD authority.  The RD authority is represented as a byte string using ASCII encoding.  It MUST NOT contain any percent-encoded character other than for those characters not explicitly allowed by the grammar in <xref target="RD-format" />.</t>
+      </section>
+
+      <section title="New OID arc for CoAP">
+        <t>This OID designates the OID arc for CoAP-related OIDs assigned by future IETF action, including those introduced by the present document:</t>
+        <figure>
+          <artwork align="center"><![CDATA[
+   id-coap OBJECT IDENTIFIER ::= { id-pkix coap(TODO) }
+          ]]></artwork>
+        </figure>
+      </section>
+       
+      <section title="OtherName type-id and value Syntax">
+        <t>A X.509 Server Certificate intended to be used for resources served by a RD authority MUST contain an otherName SAN identified using a type-id of 'id-rdauthority-san':</t>
+        <figure>
+          <artwork align="center"><![CDATA[
+id-rdauthority-san OBJECT IDENTIFIER ::= { id-coap 2 }
+          ]]></artwork>
+        </figure>
+        <t>The value field of the otherName MUST contain an RD authority (<xref target="RD-format" />), encoded as a IA5String.</t>
+      </section>
+    </section>
+
+    <section title="Client Behaviour">
+      <t>
+        <list style="format %d)">
+          <t>Send extended ClientHello containing:
+            <list style="format %c)">
+              <t>server_name extension with one (and one only) ServerName, case-insensitive matching the authority of the URI to be requested;</t>
+              <t>Any other potentially useful extension, e.g. client_certificate_url;</t>
+            </list>
+          </t>
+          <t>Verify that the intended server name is indeed one of the identities bound to the presented certificate, by checking that the name in the SAN otherName of type id-rdauthority-san case-insensitive matches the authority requested via server_name;</t>
+          <t>Upon receiving the CertificateRequest message, send the certificate via a Certificate message - or CertificateURL message, if the client_certificate_url extension has been successfully negotiated during the "hello" phase;</t>
+          <t>Send ClientKeyExchange and then CertificateVerify to complete the mutual authentication process.</t>
+        </list>
+      </t>
+      <!--
+      <t><cref>FIXME Add para that states "all other requirements given in CoAP are still valid".</cref></t>
+      <t><cref>FIXME Remember to use established TLS notation, e.g. ClientHello.random, etc.</cref></t>
+      -->
+    </section>
+    <section title="Server Behaviour">
+      <t><list style="format %d)">
+        <t>Server receives extended ClientHello carrying a server_name extension, and uses the given server_name (with a rd_authority NameType) to select the appropriate certificate.  The selected certificate MUST include a SAN otherName with an id-rdauthority-san type-id and value, which MUST case-insensitive match the requested ServerName;
+        <list style="format %c)">
+          <t>If no certificate can be selected, the server MUST terminate the handshake by sending a fatal-level unrecognized_name(112) alert. <cref>Prefer a single, hard failure, path over soft failure, or worse: ignoring the error altogether.  Rationale: do not waste time/energy; provide clear and prompt diagnostic to the peer.  It doesn't look like the condition that could be exploited by a timing attack.</cref></t>
+          <t>If a matching certificate exist, the server SHALL include an extension of type "server_name" in the (extended) ServerHello message with an empty value.</t>
+        </list></t>
+        <t>The server MUST send the selected certificate back to the client in the Certificate message.</t>
+        <t>Server MUST then request the client certificate via a CertificateRequest message and conclude its negotiation with a ServerHelloDone message.</t>
+        <t>When server receives the Certificate message from the client then, depending on the specific application security policy, it MAY want to match one of the identities of the client against a configured ACL, and decide whether to continue or to tear down the session <cref>TODO Which alert code to use if ACL check fails?</cref>.</t>
+        <t>The server application running on top of DTLS MUST check the requested URI authority case-insensitive matches the requested server_name.</t>
+      </list></t>
+      <!--
+      <t><cref>TODO What happens if the client sends also a PSK ciphersuite and the server agrees?</cref></t>
+      <t><cref>FIXME Add para that states "all other requirements given in CoAP are still valid".</cref></t>
+      <t><cref>FIXME Remember to use established TLS notation, e.g. ClientHello.random, etc.</cref></t>
+      -->
+    </section>
+
+    <section title="IANA Considerations">
+      <t><cref>Need to register a few new IDs, not sure where (IANA, PKIX registry, TLS registry)?</cref></t>
+      <t>
+        <list style="symbols">
+          <t>id-coap</t>
+          <t>OtherName.type-id::id-rdauthority-san</t>
+          <t>NameType::rd_authority</t>
+          <t>ServerName.name::RDAuthority</t>
+        </list>
+      </t>
+    </section>  <!-- IANA Considerations -->
+
+    <section title="Security Considerations">
+      <t>It's the responsibility of the CA, by means of its Registration Authority component, to verify the identity of the requester before issuing a new certificate.  In particular, the CA MUST ensure that no more than one certificate per SAN is valid at any given time.  This should exclude the threat of a (possibly rogue) node to successfully impersonate another node's identity.</t>
+
+      <t>Security considerations from Section 11.1 of <xref target="RFC6066" /> fully apply.</t>
+    </section>  <!-- Security Considerations -->
+
+    <section title="Acknowledgements">
+      <t>TODO</t>
+    </section>
+
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC3986;
+      &RFC5234;
+      &RFC5280;
+      &RFC6066;
+      &RFC7252;
+      &I-D.ietf-core-resource-directory;
+      <reference anchor="EUI-64">
+        <front>
+          <title>Guidelines for 64-bit Global Identifier (EUI-64)</title>
+          <author>
+            <organization>IEEE</organization>
+          </author>
+          <date month="November" year="2012" />
+        </front>
+      </reference>
+    </references>
+   </back>
+</rfc>
