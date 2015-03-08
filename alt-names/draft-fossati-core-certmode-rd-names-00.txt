@@ -5,8 +5,8 @@
 Internet Engineering Task Force                               T. Fossati
 Internet-Draft                                            Alcatel-Lucent
 Intended status: Standards Track                           H. Tschofenig
-Expires: July 23, 2015                                          ARM Ltd.
-                                                        January 19, 2015
+Expires: July 5, 2015                                           ARM Ltd.
+                                                            January 2015
 
 
            Resource Directory Names for Certificate Mode DTLS
@@ -33,7 +33,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on July 23, 2015.
+   This Internet-Draft will expire on July 5, 2015.
 
 Copyright Notice
 
@@ -53,34 +53,128 @@ Copyright Notice
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 1]
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 1]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 Table of Contents
 
-   1.  Terminology and Requirements Language . . . . . . . . . . . .   2
-   2.  Motivation and Scope  . . . . . . . . . . . . . . . . . . . .   2
-   3.  Resource Directory Names and Domains  . . . . . . . . . . . .   3
-     3.1.  Uniqueness Guarantee  . . . . . . . . . . . . . . . . . .   3
-     3.2.  Authority Format  . . . . . . . . . . . . . . . . . . . .   3
-       3.2.1.  Requirements  . . . . . . . . . . . . . . . . . . . .   3
-       3.2.2.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   4
-       3.2.3.  Examples  . . . . . . . . . . . . . . . . . . . . . .   4
-       3.2.4.  Uri-Host and Uri-Port Considerations  . . . . . . . .   4
-     3.3.  SNI Name Type and Server Name Syntax  . . . . . . . . . .   5
-     3.4.  New OID arc for CoAP  . . . . . . . . . . . . . . . . . .   5
-     3.5.  OtherName type-id and value Syntax  . . . . . . . . . . .   6
-   4.  Client Behaviour  . . . . . . . . . . . . . . . . . . . . . .   6
-   5.  Server Behaviour  . . . . . . . . . . . . . . . . . . . . . .   6
-   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
-   7.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
-   8.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   8
-   9.  Normative References  . . . . . . . . . . . . . . . . . . . .   8
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Challanges  . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.  Terminology and Requirements Language . . . . . . . . . . . .   4
+   3.  Resource Directory Names and Domains  . . . . . . . . . . . .   4
+     3.1.  Uniqueness Guarantee  . . . . . . . . . . . . . . . . . .   4
+     3.2.  Authority Format  . . . . . . . . . . . . . . . . . . . .   4
+       3.2.1.  Requirements  . . . . . . . . . . . . . . . . . . . .   4
+       3.2.2.  Syntax  . . . . . . . . . . . . . . . . . . . . . . .   5
+       3.2.3.  Examples  . . . . . . . . . . . . . . . . . . . . . .   5
+       3.2.4.  Uri-Host and Uri-Port Considerations  . . . . . . . .   5
+     3.3.  SNI Name Type and Server Name Syntax  . . . . . . . . . .   6
+     3.4.  New OID arc for CoAP  . . . . . . . . . . . . . . . . . .   6
+     3.5.  OtherName type-id and value Syntax  . . . . . . . . . . .   7
+   4.  Client Behaviour  . . . . . . . . . . . . . . . . . . . . . .   7
+   5.  Server Behaviour  . . . . . . . . . . . . . . . . . . . . . .   7
+   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8
+   7.  Security Considerations . . . . . . . . . . . . . . . . . . .   8
+   8.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   9
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .   9
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .  10
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  10
 
-1.  Terminology and Requirements Language
+1.  Introduction
+
+   Today, many Internet of Things (IoT) deployments consist of an IoT
+   device that interacts with a cloud service infrastructure.  (This
+   deployment model is described in Section 2.2 of
+   [I-D.iab-smart-object-architecture].)
+
+   If TLS/DTLS is used to mutually authenticate the device and the cloud
+   server, then the guidance in [I-D.ietf-dice-profile] - which, in
+   turn, takes [RFC7252] recommendations into account - should be
+   followed.
+
+   In particular, according to Section 9.1.3.3 of [RFC7252], a client
+   that receives a certificate from the server must check that the
+   authority of the requested URI matches "at least one of the
+   authorities of any CoAP URI found in a field of URI type in the
+   SubjectAltName (SAN) set.  If there is no SubjectAltName in the
+   certificate, then the authority of the request URI must match the
+   Common Name (CN) found in the certificate [...]."
+
+   According to Section 4.2.1.6 of [RFC5280] an URI that includes an
+   authority - such as a 'coaps' URI - needs to include a fully
+   qualified domain name (FQDN), or an IP literal as its host part.
+
+
+
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 2]
+
+Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+
+
+   (So, an IoT device that wants to talk to a CoAP server at
+   coaps://example.com will expect to receive a certificate with a
+   matching URI in either the content of the SAN extension or the CN.)
+
+   The combination of the two requirements above, together with text in
+   Section 3 of [RFC6066] which only allows FQDN hostname of the server
+   in the ServerName field, basically binds Certificate Mode DTLS to
+   either DNS, or static host tables containing FQDN's mappings, or some
+   other system for lookup of registered names which is able to fully
+   mimic the DNS naming scheme.
+
+   While DNS can be taken for granted in the Web, CoAP networks do not
+   mandate its presence.  In fact, there are IoT deployments where the
+   server infrastructure is located in a home or residential environment
+   in which IoT devices interact with the server solely in the local
+   network (see also Section 2.1 of
+   [I-D.iab-smart-object-architecture]).
+
+   Since static configuration is not generally a viable option, in order
+   to cope with scenarios like the one described above there is a need
+   to define some kind of stable, non-DNS, identifier that can be used
+   for 'coaps' URIs in Certificate Mode DTLS as a fall-back in case DNS
+   is not deployed, or not understood by CoAP endpoints.
+
+1.1.  Challanges
+
+   There seem to be at least four challenges that need to be solved to
+   make sure that the IoT device is indeed talking to a server whose
+   X.509 certificate identity can be compared with the requested CoAP
+   URI:
+
+   1.  what identifiers should be used in the certificate?
+
+   2.  What identifier should be contained in the hostname part of the
+       endpoint URI?
+
+   3.  What identifier should be communicated in the SNI during the TLS/
+       DTLS exchange?
+
+   4.  How can the identifier in the CoAP URI be mapped to an IP
+       address?
+
+   The way the Web solves these problems is by assuming that the name of
+   an application service is based on a DNS domain name, as stated in
+   [RFC6125].  The identifiers used in the certificate and in the SNI
+   are then FQDN's.
+
+
+
+
+
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 3]
+
+Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+
+
+   In order to offer a solution for the CoAP space this document
+   suggests the use of Resource Directory endpoint names (and domains)
+   as an alternative to DNS names.
+
+2.  Terminology and Requirements Language
 
    This specification requires the reader to be familiar with the
    terminology used in documents produced by the CoRE, TLS, and PKIX
@@ -89,46 +183,6 @@ Table of Contents
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
    document are to be interpreted as described in [RFC2119].
-
-2.  Motivation and Scope
-
-   According to Section 9.1.3.3 of [RFC7252], a client, when presented
-   with a certificate carrying the identity of the server in the
-   SubjectAltName (SAN), must check that the authority of the requested
-   URI matches at least one of the authority names of any CoAP URI found
-   in a field of URI type in the SAN set.
-
-   According to Section 4.2.1.6 of [RFC5280] an URI that includes an
-   authority - such as a 'coaps' URI - needs to include a fully
-   qualified domain name (FQDN), or an IP literal as its host part.
-
-   The combination of the two requirements above, together with text in
-   Section 3 of [RFC6066] which only allows FQDN hostname of the server
-   in the ServerName field, basically binds Certificate Mode DTLS to
-   either DNS, or static host tables containing FQDN's mappings, or some
-
-
-
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 2]
-
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
-
-
-   other system for lookup of registered names which is able to fully
-   mimic the DNS naming scheme.
-
-   Because DNS is not mandatory to implement in CoAP networks, and
-   static configuration is not generally a viable option, there is a
-   need to define some kind of stable, non-DNS, identifier that can be
-   used for 'coaps' URIs in Certificate Mode DTLS as a fall-back in case
-   DNS is not deployed, or not understood by CoAP endpoints.
-
-   The purpose of this memo is to describe syntax and rules for using
-   Resource Directory endpoint names (and domains)
-   [I-D.ietf-core-resource-directory] as an alternative to DNS names in
-   the above said context.
-
-   This memo contains updates to [RFC7252], [RFC6066], and [RFC5280].
 
 3.  Resource Directory Names and Domains
 
@@ -165,7 +219,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 3]
+
+
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 4]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
@@ -221,7 +277,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 4]
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 5]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
@@ -277,7 +333,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 5]
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 6]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
@@ -333,7 +389,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 6]
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 7]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
@@ -389,7 +445,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 7]
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 8]
 
 Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
@@ -400,7 +456,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
    TODO
 
-9.  Normative References
+9.  References
+
+9.1.  Normative References
 
    [EUI-64]   IEEE, "Guidelines for 64-bit Global Identifier (EUI-64)",
               November 2012.
@@ -409,6 +467,11 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
               Shelby, Z. and C. Bormann, "CoRE Resource Directory",
               draft-ietf-core-resource-directory-02 (work in progress),
               November 2014.
+
+   [I-D.ietf-dice-profile]
+              Tschofenig, H., "A Datagram Transport Layer Security
+              (DTLS) 1.2 Profile for the Internet of Things", draft-
+              ietf-dice-profile-04 (work in progress), August 2014.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119, March 1997.
@@ -431,6 +494,32 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
    [RFC7252]  Shelby, Z., Hartke, K., and C. Bormann, "The Constrained
               Application Protocol (CoAP)", RFC 7252, June 2014.
 
+
+
+
+
+
+
+
+Fossati & Tschofenig      Expires July 5, 2015                  [Page 9]
+
+Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+
+
+9.2.  Informative References
+
+   [I-D.iab-smart-object-architecture]
+              Tschofenig, H., Arkko, J., Thaler, D., and D. McPherson,
+              "Architectural Considerations in Smart Object Networking",
+              draft-iab-smart-object-architecture-06 (work in progress),
+              October 2014.
+
+   [RFC6125]  Saint-Andre, P. and J. Hodges, "Representation and
+              Verification of Domain-Based Application Service Identity
+              within Internet Public Key Infrastructure Using X.509
+              (PKIX) Certificates in the Context of Transport Layer
+              Security (TLS)", RFC 6125, March 2011.
+
 Authors' Addresses
 
    Thomas Fossati
@@ -440,14 +529,6 @@ Authors' Addresses
    Great Britain
 
    Email: thomas.fossati@alcatel-lucent.com
-
-
-
-
-
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 8]
-
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
    Hannes Tschofenig
@@ -476,29 +557,4 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Fossati & Tschofenig      Expires July 23, 2015                 [Page 9]
+Fossati & Tschofenig      Expires July 5, 2015                 [Page 10]
