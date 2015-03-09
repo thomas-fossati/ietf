@@ -5,8 +5,8 @@
 Internet Engineering Task Force                               T. Fossati
 Internet-Draft                                            Alcatel-Lucent
 Intended status: Standards Track                           H. Tschofenig
-Expires: July 5, 2015                                           ARM Ltd.
-                                                            January 2015
+Expires: September 10, 2015                                     ARM Ltd.
+                                                           March 9, 2015
 
 
            Resource Directory Names for Certificate Mode DTLS
@@ -33,7 +33,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on July 5, 2015.
+   This Internet-Draft will expire on September 10, 2015.
 
 Copyright Notice
 
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 1]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 1]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
 Table of Contents
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 2]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 2]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
    (So, an IoT device that wants to talk to a CoAP server at
@@ -165,9 +165,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 3]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 3]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
    In order to offer a solution for the CoAP space this document
@@ -221,9 +221,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 4]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 4]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
 3.2.2.  Syntax
@@ -277,9 +277,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 5]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 5]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
    Hence, there is no need to include explicit Uri-Host and Uri-Port
@@ -333,9 +333,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 6]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 6]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
 3.5.  OtherName type-id and value Syntax
@@ -389,9 +389,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 7]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 7]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
            Rationale: do not waste time/energy; provide clear and prompt
@@ -445,9 +445,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 8]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 8]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
    Security considerations from Section 11.1 of [RFC6066] fully apply.
@@ -501,9 +501,9 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                  [Page 9]
+Fossati & Tschofenig   Expires September 10, 2015               [Page 9]
 
-Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
+Internet-Draft     RD Names for Certificate Mode DTLS         March 2015
 
 
 9.2.  Informative References
@@ -557,4 +557,4 @@ Authors' Addresses
 
 
 
-Fossati & Tschofenig      Expires July 5, 2015                 [Page 10]
+Fossati & Tschofenig   Expires September 10, 2015              [Page 10]
