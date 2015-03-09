@@ -61,7 +61,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
-     1.1.  Challanges  . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.1.  Challenges  . . . . . . . . . . . . . . . . . . . . . . .   3
    2.  Terminology and Requirements Language . . . . . . . . . . . .   4
    3.  Resource Directory Names and Domains  . . . . . . . . . . . .   4
      3.1.  Uniqueness Guarantee  . . . . . . . . . . . . . . . . . .   4
@@ -138,7 +138,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
    for 'coaps' URIs in Certificate Mode DTLS as a fall-back in case DNS
    is not deployed, or not understood by CoAP endpoints.
 
-1.1.  Challanges
+1.1.  Challenges
 
    There seem to be at least four challenges that need to be solved to
    make sure that the IoT device is indeed talking to a server whose
@@ -188,7 +188,7 @@ Internet-Draft     RD Names for Certificate Mode DTLS       January 2015
 
    In CoAP networks, a Resource Directory (RD)
    [I-D.ietf-core-resource-directory] is an entity that acts as a
-   centralised store where protocol endpoints can register and lookup
+   centralized store where protocol endpoints can register and lookup
    links to resources that are made available in the network.  The RD
    defines the concept of an "endpoint name" which identifies a given
    Endpoint (i.e. web server) within a given "domain".  Under the

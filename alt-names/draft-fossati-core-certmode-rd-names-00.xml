@@ -88,7 +88,7 @@
 
       <t> Since static configuration is not generally a viable option, in order to cope with scenarios like the one described above there is a need to define some kind of stable, non-DNS, identifier that can be used for 'coaps' URIs in Certificate Mode DTLS as a fall-back in case DNS is not deployed, or not understood by CoAP endpoints.</t>
 
-    <section title="Challanges">
+    <section title="Challenges">
       <t>There seem to be at least four challenges that need to be solved to make sure that the IoT device is indeed talking to a server whose X.509 certificate identity can be compared with the requested CoAP URI:
           <list style="numbers">
             <t>what identifiers should be used in the certificate?</t>
@@ -129,7 +129,7 @@
 -->
 
     <section title="Resource Directory Names and Domains">
-      <t>In CoAP networks, a Resource Directory (RD) <xref target="I-D.ietf-core-resource-directory" /> is an entity that acts as a centralised store where protocol endpoints can register and lookup links to resources that are made available in the network.  The RD defines the concept of an "endpoint name" which identifies a given Endpoint (i.e. web server) within a given "domain".  Under the assumption of its uniqueness, an endpoint name/domain can be used as a stable host component for CoAP authorities.</t>
+      <t>In CoAP networks, a Resource Directory (RD) <xref target="I-D.ietf-core-resource-directory" /> is an entity that acts as a centralized store where protocol endpoints can register and lookup links to resources that are made available in the network.  The RD defines the concept of an "endpoint name" which identifies a given Endpoint (i.e. web server) within a given "domain".  Under the assumption of its uniqueness, an endpoint name/domain can be used as a stable host component for CoAP authorities.</t>
       <section title="Uniqueness Guarantee">
         <t>An endpoint name is guaranteed to be unique within the associated domain.  If the domain is elided during registration, the RD should assure its uniqueness within an implicit default domain.</t> 
         <!--
