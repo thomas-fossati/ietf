@@ -1,0 +1,448 @@
+
+
+
+
+Internet Engineering Task Force                               T. Fossati
+Internet-Draft                                                     Nokia
+Updates: RFC6066 (if approved)                             H. Tschofenig
+Intended status: Standards Track                                     ARM
+Expires: January 5, 2017                                    July 4, 2016
+
+
+                        DTLS extensions for IoT
+                    draft-fossati-tls-iot-extensions
+
+Abstract
+
+   This memo highlights a few (actual or potential) issues encountered
+   when DTLS is used to secure the communication between two IoT
+   devices, or between an IoT device and an unconstrained node.
+
+   A number of high-level proposals for how to solve said problems are
+   discussed.  The proposed changes are not intended to alter the base
+   (D)TLS protocol and shall be realised using the extension framework
+   defined in [RFC6066].
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on January 5, 2017.
+
+Copyright Notice
+
+   Copyright (c) 2016 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 1]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   2
+   2.  Selective Fragment Retransmission . . . . . . . . . . . . . .   3
+     2.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   3
+     2.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Transport Agnostic Security Associations  . . . . . . . . . .   3
+     3.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   3
+     3.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   4
+   4.  Diet DTLS Header  . . . . . . . . . . . . . . . . . . . . . .   5
+     4.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   5
+     4.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   5
+   5.  Server Maximum Fragment Length  . . . . . . . . . . . . . . .   5
+     5.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   5
+     5.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
+   6.  0-RTT Client Authentication . . . . . . . . . . . . . . . . .   6
+     6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
+     6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
+   9.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .   7
+     10.2.  Informative References . . . . . . . . . . . . . . . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
+
+1.  Introduction
+
+   This memo highlights a few (actual or potential) issues encountered
+   when DTLS is used to secure the communication between two IoT
+   devices, or between an IoT device and an unconstrained node.
+
+   A series of high-level proposals for how to solve said problems are
+   discussed.  The proposed changes are not intended to alter the base
+   (D)TLS protocol and shall be realised using the extension framework
+   defined in [RFC6066].
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 2]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+2.  Selective Fragment Retransmission
+
+2.1.  Problem Statement
+
+   The unit of retransmission used by the DTLS handshake is a whole
+   flight (Section 4.2.4 of [RFC6347].
+
+   If the underlying media is inherently loss-y, or shows high latency
+   variance that might fire spurious retransmission, a single fragment
+   that gets lost or is excessively delayed will force the whole flight
+   to be re-injected into the network (in what can be actually described
+   as a self inflicted amplification attack).
+
+   This is further exacerbated when the effective MTU is very low and
+   therefore handshake messages have higher probability to be
+   fragmented.  For example, 802.15.4 networks have 128-bytes MTU: in
+   such context a very "ordinary" TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+   negotiation can take up to 30 individual fragments, 2/3 of which are
+   sent in flight 4.  The loss of a single fragment in flight 4 implies
+   a retransmission that is 20x the magnitude of the original loss.
+
+   The retransmission timer settings suggested in Section 11 of
+   [I-D.ietf-dice-profile] offer mitigation for the spurious retransmit
+   issue and, in general, help with congestion.  However, they do not
+   solve the underlying amplification issue that is intrinsic to the
+   current design.
+
+2.2.  Proposal
+
+   We propose to add a NACK-based retransmission scheme to the DTLS
+   handshake.  The granularity of retransmission shall be the message
+   fragment.  We note that each fragment in a DTLS handshake is
+   effectively associated to a unique identifier defined by the tuple
+   Handshake.{message_seq,fragment_offset,fragment_length} that can be
+   used in the NACK report to identify the exact geometry of the missing
+   data in the current flight, together with the right-most received
+   byte.
+
+3.  Transport Agnostic Security Associations
+
+3.1.  Problem Statement
+
+   In DTLS, the security context demux is done via the 5-tuple that
+   identifies the underlying transport instance.
+
+   This implies that the associated DTLS context needs to be re-
+   negotiated from scratch whenever the transport changes, e.g., when
+   moving the network attachment from GSM-SMS to IP (see [OMA-LWM2M]).
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 3]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+   In Low Power and Lossy Networks (LLNs), or in situations where one of
+   the two parties is a constrained device, the DTLS handshake tends to
+   be expensive and fragile (see Section 11 of [I-D.ietf-dice-profile]).
+   When this is the case, its use should be limited to the strict
+   necessary to preserve the security of the channel, avoiding extra
+   work whenever possible.
+
+3.2.  Proposal
+
+   We propose to add the ability to negotiate, at handshake time, a
+   transport independent identifier that is unique per security
+   association - denoted SC-Id (Secure Context Identifier) in Figure 1 -
+   that allows decoupling the DTLS session from the underlying transport
+   technology therefore allowing the same DTLS security association to
+   be migrated over different transport technologies mid-life.  This way
+   a secure context can be negotiated over a powerful media (e.g., UPD/
+   IP over WLAN) and then reused over a less capable transport (GSM-SMS,
+   802.15.4).
+
+
+                                        00
+                                        /\
+                                        :
+    IP                    UDP           : DTLS Record Header
+    +-----+-----+-------+ +-----+-----+ : +---------+-------+------
+    | src | dst | proto | | src | dst | : | Seq#i   | SC-Id | ...
+    +-----+-----+-------+ +-----+-----+ : +---------+-------+------
+    `----------------+----------------' :           ^
+                      `................ : ..........'
+     <Handover event>                   :
+                      GSM-SMS           : DTLS Record Header
+                      +-------+-------+ : +---------+-------+-----
+                      | tp-oa | tp-da | : | Seq#i+1 | SC-Id | ...
+                      +-------+-------+ : +---------+-------+-----
+                                        :
+                                        \/
+                                        00
+
+
+              Figure 1: Transparent handover of DTLS session
+
+   An equivalent approach to support transparent handover of a DTLS
+   session has been described in [I-D.barrett-mobile-dtls] and
+   [Seggelmann].
+
+
+
+
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 4]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+4.  Diet DTLS Header
+
+4.1.  Problem Statement
+
+   DTLS adds 13 bytes of overhead per record plus any ciphersuite-
+   specific addition; see Appendix B of [I-D.ietf-dice-profile].
+
+   This burden becomes quite substantial in networks with small frame
+   sizes (e.g., 802.15.4, GSM-SMS), which, even with an adaptation layer
+   in between the data link and network layers, tend to be used by the
+   applications with an actual MTU the same size as their physical frame
+   (i.e., 128, 160 bytes) to avoid fragmentation.
+
+   Overhead that is not strictly needed could be removed to allow more
+   application data payload - in use cases where typically even a
+   handful of bytes can make the difference -, and/or make space for
+   useful DTLS features (e.g., the proposal in Section 3).
+
+4.2.  Proposal
+
+   It should be possible to remove (TBD) redundant bits from the header.
+   E.g., consider the following::
+
+   o  protocol version: drop it altogether;
+
+   o  sequence number: make it 4 bytes (a la TCP) instead of 6;
+
+   o  length: might be dropped altogether if we force one DTLS packet
+      per UDP packet [[CREF1: Although this is just apparent, as the
+      overhead is moved on the UDP header --TF]];
+
+   o  epoch: make it 1 byte instead of 2;
+
+   These trimmings would bring the overhead down to 7 bytes per record.
+
+5.  Server Maximum Fragment Length
+
+5.1.  Problem Statement
+
+   The Maximum Fragment Length extension [RFC6066] allows a client with
+   limited buffer space to specify a different (smaller) maximum size
+   for fragments that the server is allowed to send.  The mechanism is
+   not symmetrical, that is: a server can't do the same.  The assumption
+   made in [RFC6066] is that the server is never going to be a
+   constrained device, and therefore doesn't need this facility.  CoAP
+   [RFC7252] breaks this expectation, by allowing any (constrained) node
+   to be at the same time client and server.  In such scenario, allowing
+
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 5]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+   a constrained server to advertise its Maximum Fragment Length would
+   prove very useful.
+
+5.2.  Proposal
+
+   Allow server to send unsolicited max_fragment_length extension to the
+   client in ServerHello [[CREF2: Or maybe in HelloVerifyRequest?  No,
+   unless we want to modify the base protocol. --TF]]
+
+   Define a new alert code to signal maximum fragment length exceeded.
+
+   Define reasonable fragment length to be used by the client on retry
+   before the explicit indication has been received.
+
+6.  0-RTT Client Authentication
+
+6.1.  Problem Statement
+
+   The ability to do 0-RTT mutual authentication would provide a very
+   compelling reason for moving IoT security from (D)TLS 1.2 to 1.3,
+   since IoT devices typically need a mutually authenticated secure
+   channel.  Unfortunately, based on feedback from the TRON workshop,
+   the TLS working group decided to remove Client Authentication from
+   0-RTT starting with version -13 of [I-D.ietf-tls-tls13].  In fact, as
+   described in [Bhargavan], the mechanism offers less-than-ideal
+   security properties: the authentication is tied to the client's
+   (EC)DH share which effectively becomes a long-term DH certificate.
+   As a consequence, an impersonation attack arises when the client's
+   ephemeral key is compromised.
+
+6.2.  Proposal
+
+   Provide a risk analysis for typical IoT environments (m2m, m2cloud)
+   which should serve as a guidance to decide in which cases the risk is
+   acceptable.
+
+   Describe the RFC6066 [RFC6066] extension that allows this
+   functionality to be used by willing clients and servers.
+
+   Describe the fallback to normal operations in case server denies its
+   consent to use the extension.
+
+7.  Acknowledgements
+
+   TODO
+
+
+
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 6]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+8.  IANA Considerations
+
+   This memo is likely to include a bunch of requests to IANA.
+
+9.  Security Considerations
+
+   TODO
+
+10.  References
+
+10.1.  Normative References
+
+   [I-D.ietf-tls-tls13]
+              Rescorla, E., "The Transport Layer Security (TLS) Protocol
+              Version 1.3", draft-ietf-tls-tls13-13 (work in progress),
+              May 2016.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <http://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC6066]  Eastlake 3rd, D., "Transport Layer Security (TLS)
+              Extensions: Extension Definitions", RFC 6066,
+              DOI 10.17487/RFC6066, January 2011,
+              <http://www.rfc-editor.org/info/rfc6066>.
+
+   [RFC6347]  Rescorla, E. and N. Modadugu, "Datagram Transport Layer
+              Security Version 1.2", RFC 6347, DOI 10.17487/RFC6347,
+              January 2012, <http://www.rfc-editor.org/info/rfc6347>.
+
+10.2.  Informative References
+
+   [Bhargavan]
+              Bhargavan, K., Kobeissi, N., and B. Beurdouche,
+              "ProScript-TLS: Verifiable Models and Systematic Testing
+              for TLS 1.3", TRON workshop, 2016,
+              <https://www.internetsociety.org/sites/default/files/
+              T4-ProScript.pdf>.
+
+   [I-D.barrett-mobile-dtls]
+              Williams, M. and J. Barrett, "Mobile DTLS", draft-barrett-
+              mobile-dtls-00 (work in progress), March 2009.
+
+   [I-D.ietf-dice-profile]
+              Tschofenig, H. and T. Fossati, "TLS/DTLS Profiles for the
+              Internet of Things", draft-ietf-dice-profile-17 (work in
+              progress), October 2015.
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 7]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
+   [OMA-LWM2M]
+              Open Mobile Alliance, "Lightweight Machine to Machine
+              Technical Specification", 2016, <http://technical.openmobi
+              lealliance.org/Technical/Release_Program/docs/
+              LightweightM2M/V1_0-20160407-C/
+              OMA-TS-LightweightM2M-V1_0-20160407-C.pdf>.
+
+   [RFC7252]  Shelby, Z., Hartke, K., and C. Bormann, "The Constrained
+              Application Protocol (CoAP)", RFC 7252,
+              DOI 10.17487/RFC7252, June 2014,
+              <http://www.rfc-editor.org/info/rfc7252>.
+
+   [Seggelmann]
+              Seggelmann, R., Tuexen, M., and E. Rathgeb, "DTLS
+              Mobility", ICDCN 12, 2012.
+
+Authors' Addresses
+
+   Thomas Fossati
+   Nokia
+   Cambridge
+   UK
+
+   Email: thomas.fossati@nokia.com
+
+
+   Hannes Tschofenig
+   ARM
+   Cambridge
+   UK
+
+   Email: hannes.tschofenig@arm.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Fossati & Tschofenig     Expires January 5, 2017                [Page 8]
