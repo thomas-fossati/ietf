@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC3552 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3552.xml">
+<!ENTITY RFC6347 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6347.xml">
+<!ENTITY RFC6066 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6066.xml">
+<!ENTITY RFC7252 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7252.xml">
+<!ENTITY I-D.ietf-dice-profile SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-dice-profile.xml">
+<!ENTITY I-D.barrett-mobile-dtls SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.barrett-mobile-dtls.xml">
+<!ENTITY I-D.ietf-tls-tls13 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-tls-tls13.xml">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<?rfc comments="yes" ?>
+<?rfc inline="yes" ?>
+<rfc category="std" docName="draft-fossati-tls-iot-extensions" ipr="trust200902" updates="RFC6066">
+  <front>
+    <title abbrev="DTLS Extensions for IoT">DTLS extensions for IoT</title>
+    <author fullname="Thomas Fossati" initials="T.F." surname="Fossati">
+      <organization>Nokia</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Cambridge</city>
+          <country>UK</country>
+        </postal>
+        <email>thomas.fossati@nokia.com</email>
+      </address>
+    </author>
+    <author fullname="Hannes Tschofenig" initials="H.T." surname="Tschofenig">
+      <organization>ARM</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Cambridge</city>
+          <country>UK</country>
+        </postal>
+        <email>hannes.tschofenig@arm.com</email>
+      </address>
+    </author>
+    <date year="2016"/>
+    <area>General</area>
+    <workgroup>Internet Engineering Task Force</workgroup>
+    <keyword>DTLS, TLS, Internet of Things, IoT, TLS extensions</keyword>
+    <abstract>
+      <t>This memo highlights a few (actual or potential) issues encountered when DTLS is used to secure the communication between two IoT devices, or between an IoT device and an unconstrained node.</t>
+      <t>A series of high-level proposals for how to solve said problems are discussed.  The proposed changes are not intended to alter the base (D)TLS protocol and shall be realised using the extension framework defined in <xref target="RFC6066"/>.</t>
+    </abstract>
+  </front>
+  <middle>
+    <section title="Introduction">
+      <t>This memo highlights a few (actual or potential) issues encountered when DTLS is used to secure the communication between two IoT devices, or between an IoT device and an unconstrained node.</t>
+      <t>A series of high-level proposals for how to solve said problems are discussed.  The proposed changes are not intended to alter the base (D)TLS protocol and shall be realised using the extension framework defined in <xref target="RFC6066"/>.</t>
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119">RFC 2119</xref>.</t>
+      </section>
+    </section>
+    <?rfc needLines="8" ?>
+    <section title="Selective Fragment Retransmission" anchor="sec:snack">
+      <section title="Problem Statement">
+        <t>The unit of retransmission used by the DTLS handshake is a whole flight (Section 4.2.4 of <xref target="RFC6347" />.</t>
+        <t>If the underlying media is inherently loss-y, or shows high latency variance that might fire spurious retransmission, a single fragment that gets lost or is excessively delayed will force the whole flight to be re-injected into the network (in what can be actually described as a self inflicted amplification attack).</t>
+        <t>This is further exacerbated when the effective MTU is very low and therefore handshake messages have higher probability to be fragmented.  For example, 802.15.4 networks have 128-bytes MTU: in such context a very "ordinary" TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA negotiation can take up to 30 individual fragments, 2/3 of which are sent in flight 4.  The loss of a single fragment in flight 4 implies a retransmission that is 20x the magnitude of the original loss.</t>
+        <t>The retransmission timer settings suggested in Section 11 of <xref target="I-D.ietf-dice-profile"/> offer mitigation for the spurious retransmit issue and, in general, help with congestion.  However, they do not solve the underlying amplification issue that is intrinsic to the current design.</t>
+      </section>
+      <section title="Proposed Solution">
+        <t>We propose to add a NACK-based retransmission scheme to the DTLS handshake.  The granularity of retransmission shall be the message fragment.  We note that each fragment in a DTLS handshake is effectively associated to a unique identifier defined by the tuple Handshake.{message_seq,fragment_offset,fragment_length} that can be used in the NACK report to identify the exact geometry of the missing data in the current flight together with the right-most received byte.</t>
+      </section>
+    </section>
+    <section title="Transport Agnostic Security Associations" anchor="sec:ta-sa">
+      <section title="Problem Statement">
+        <t>In DTLS, the security context demux is done via the 5-tuple that identifies the underlying transport instance.</t>
+        <t>This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the transport changes, e.g., when moving the network attachment from GSM-SMS to IP (see <xref target="OMA-LWM2M"/>).</t>
+        <t>In Low Power and Lossy Networks (LLNs), or in situations where one of the two parties is a constrained device, the DTLS handshake tends to be expensive and fragile (see Section 11 of <xref target="I-D.ietf-dice-profile"/>).  When this is the case, its use should be limited to the strict necessary to preserve the security of the channel, avoiding extra work whenever possible.</t>
+      </section>
+      <section title="Proposed Solution">
+        <t>We propose to add the ability to negotiate, at handshake time, a transport independent identifier that is unique per security association - denoted SC-Id (Secure Context Identifier) in <xref target="fig:scid"/> - that allows decoupling the DTLS session from the underlying transport technology therefore allowing the same DTLS security association to be migrated over different transport technologies mid-life.  This way a secure context can be negotiated over a powerful media (e.g., UPD/IP over WLAN) and then reused over a less capable transport (GSM-SMS, 802.15.4).</t>
+        <figure title="Transparent handover of DTLS session" anchor="fig:scid">
+          <artwork>
+            <![CDATA[
+                                     00
+                                     /\
+                                     :
+ IP                    UDP           : DTLS Record Header
+ +-----+-----+-------+ +-----+-----+ : +---------+-------+------
+ | src | dst | proto | | src | dst | : | Seq#i   | SC-Id | ...
+ +-----+-----+-------+ +-----+-----+ : +---------+-------+------
+ `----------------+----------------' :           ^
+                   `................ : ..........'
+  <Handover event>                   :
+                   GSM-SMS           : DTLS Record Header
+                   +-------+-------+ : +---------+-------+-----
+                   | tp-oa | tp-da | : | Seq#i+1 | SC-Id | ...
+                   +-------+-------+ : +---------+-------+-----
+                                     :
+                                     \/
+                                     00
+            ]]>
+          </artwork>
+        </figure>
+        <t>An equivalent approach to support transparent handover of a DTLS session has been described in <xref target="I-D.barrett-mobile-dtls"/> and <xref target="Seggelmann"/>.</t>
+      </section>
+    </section>
+    <section title="Diet DTLS Header" anchor="sec:diet">
+      <section title="Problem Statement">
+        <t>DTLS adds 13 bytes of overhead per record plus any ciphersuite-specific addition; see Appendix B of <xref target="I-D.ietf-dice-profile"/>.</t>
+        <t>This burden becomes quite substantial in networks with small frame sizes (e.g., 802.15.4, GSM-SMS), which, even with an adaptation layer in between the data link and network layers, tend to be used by the applications with an actual MTU the same size as their physical frame (i.e., 128, 160 bytes) to avoid fragmentation.</t>
+        <t>Overhead that is not strictly needed could be removed to allow more application data payload - in use cases where typically even a handful of bytes can make the difference -, and/or make space for useful DTLS features (e.g., the proposal in <xref target="sec:ta-sa"/>).</t>
+      </section>
+      <section title="Proposed Solution">
+        <t>It should be possible to remove (TBD) redundant bits from the header.  E.g., consider the following::
+          <list style="symbols">
+            <t>protocol version</t>
+            <t>sequence number</t>
+            <t>length</t>
+            <t>epoch</t>
+            <t>content-type</t>
+          </list>
+        </t>
+      </section>
+    </section>
+    <section title="Server Maximum Fragment Length" anchor="sec:server-mfl">
+      <section title="Problem Statement">
+        <t>The Maximum Fragment Length extension <xref target="RFC6066"/> allows a client with limited buffer space to specify a different (smaller) maximum size for fragments that the server is allowed to send.  The mechanism is not symmetrical, that is: a server can't do the same.  The assumption made in <xref target="RFC6066"/> is that the server is never going to be a constrained device, and therefore doesn't need this facility.  CoAP <xref target="RFC7252"/> breaks this expectation, by allowing any (constrained) node to be at the same time client and server.  In such scenario, allowing a constrained server to advertise its Maximum Fragment Length would prove very useful.</t>
+      </section>
+      <section title="Proposed Solution">
+        <t>Allow server to send unsolicited max_fragment_length extension to the client in ServerHello <cref source="TF">Or maybe in HelloVerifyRequest? No, unless we want to modify the base protocol.</cref></t>
+        <t>Define a new alert code to signal maximum fragment length exceeded.</t>
+        <t>Define reasonable fragment length to be used by the client on retry before the explicit indication has been received.</t>
+      </section>
+    </section>
+    <section title="0-RTT Client Authentication" anchor="sec:0rtt-cliauth">
+      <section title="Problem Statement">
+        <t>The ability to do 0-RTT mutual authentication would provide a very compelling reason for moving IoT security from (D)TLS 1.2 to 1.3, since IoT devices typically need a mutually authenticated secure channel.  Unfortunately, based on feedback from the TRON workshop, the TLS working group decided to remove Client Authentication from 0-RTT starting with version -13 of <xref target="I-D.ietf-tls-tls13"/>.  In fact, as described in <xref target="Bhargavan"/>, the mechanism offers less-than-ideal security properties: the authentication is tied to the client's (EC)DH share which effectively becomes a long-term DH certificate.  As a consequence, an impersonation attack arises when the client's ephemeral key is compromised.</t>
+      </section>
+      <section title="Proposed Solution">
+        <t>Provide a risk analysis for typical IoT environments (m2m, m2cloud) which should serve as a guidance to decide in which cases the risk is acceptable.</t>
+        <t>Describe the RFC6066 <xref target="RFC6066"/> extension that allows this functionality to be used by willing clients and servers.</t>
+        <t>Describe the fallback to normal operations in case server denies its consent to use the extension.</t>
+      </section>
+    </section>
+    <section anchor="Acknowledgements" title="Acknowledgements">
+      <t>TODO</t>
+    </section>
+    <!-- Possibly a 'Contributors' section ... -->
+    <section anchor="IANA" title="IANA Considerations">
+      <t>This memo is likely to include a bunch of requests to IANA.</t>
+    </section>
+    <section anchor="Security" title="Security Considerations">
+      <t>TODO</t>
+    </section>
+  </middle>
+  <back>
+    <references title="Normative References">
+     &RFC2119;
+     &RFC6347;
+     &RFC6066;
+     &I-D.ietf-tls-tls13;
+    </references>
+    <references title="Informative References">
+     &RFC7252;
+     &I-D.ietf-dice-profile;
+     &I-D.barrett-mobile-dtls;
+
+     <reference anchor="Seggelmann">
+      <front>
+        <title>DTLS Mobility</title>
+        <author initials="R.S." surname="Seggelmann">
+          <organization/>
+        </author>
+        <author initials="M.T." surname="Tuexen">
+          <organization/>
+        </author>
+        <author initials="E.R." surname="Rathgeb">
+          <organization/>
+        </author>
+        <date year="2012"/>
+      </front>
+      <seriesInfo name="ICDCN" value="12" />
+    </reference>
+
+    <reference anchor="Bhargavan" target="https://www.internetsociety.org/sites/default/files/T4-ProScript.pdf">
+      <front>
+        <title>ProScript-TLS: Verifiable Models and Systematic Testing for TLS 1.3</title>
+        <author initials="K.B." surname="Bhargavan">
+          <organization/>
+        </author>
+        <author initials="N.K." surname="Kobeissi">
+          <organization/>
+        </author>
+        <author initials="B.B." surname="Beurdouche">
+          <organization/>
+        </author>
+        <date year="2016"/>
+      </front>
+      <seriesInfo name="TRON" value="workshop" />
+  </reference>
+
+     <reference anchor="OMA-LWM2M" target="http://technical.openmobilealliance.org/Technical/Release_Program/docs/LightweightM2M/V1_0-20160407-C/OMA-TS-LightweightM2M-V1_0-20160407-C.pdf">
+      <front>
+        <title>Lightweight Machine to Machine Technical Specification</title>
+        <author>
+          <organization>Open Mobile Alliance</organization>
+        </author>
+        <date year="2016"/>
+      </front>
+    </reference>
+   </references>
+    <!-- Change Log
+v00 2016-06-15  TF   Initial version
+    -->
+  </back>
+</rfc>
