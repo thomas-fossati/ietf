@@ -340,7 +340,7 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 7.  Acknowledgements
 
-   Stephen Farrel for suggesting the use of hash chains to implement a
+   Stephen Farrell for suggesting the use of hash chains to implement a
    privacy-friendly SC-Id.
 
 8.  IANA Considerations
