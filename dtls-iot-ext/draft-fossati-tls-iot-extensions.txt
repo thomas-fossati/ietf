@@ -6,7 +6,7 @@ Internet Engineering Task Force                               T. Fossati
 Internet-Draft                                                     Nokia
 Updates: RFC6066 (if approved)                             H. Tschofenig
 Intended status: Standards Track                                     ARM
-Expires: January 5, 2017                                    July 4, 2016
+Expires: January 6, 2017                                    July 5, 2016
 
 
                         DTLS extensions for IoT
@@ -38,7 +38,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on January 5, 2017.
+   This Internet-Draft will expire on January 6, 2017.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Fossati & Tschofenig     Expires January 5, 2017                [Page 1]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 1]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -82,7 +82,7 @@ Table of Contents
    6.  0-RTT Client Authentication . . . . . . . . . . . . . . . . .   6
      6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
      6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
-   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   7
    8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
    9.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
    10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
@@ -109,7 +109,7 @@ Table of Contents
 
 
 
-Fossati & Tschofenig     Expires January 5, 2017                [Page 2]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 2]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -165,7 +165,7 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
 
-Fossati & Tschofenig     Expires January 5, 2017                [Page 3]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 3]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -197,8 +197,8 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
     +-----+-----+-------+ +-----+-----+ : +---------+-------+------
     | src | dst | proto | | src | dst | : | Seq#i   | SC-Id | ...
     +-----+-----+-------+ +-----+-----+ : +---------+-------+------
-    `----------------+----------------' :           ^
-                      `................ : ..........'
+    `----------------+----------------' :              ^
+                      `................ : .............'
      <Handover event>                   :
                       GSM-SMS           : DTLS Record Header
                       +-------+-------+ : +---------+-------+-----
@@ -215,16 +215,19 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
    session has been described in [I-D.barrett-mobile-dtls] and
    [Seggelmann].
 
+   The privacy issue associated with the use of a stable clear-text
+   identifier must be taken into consideration when defining the exact
+   SC-Id format.  For example, client and server could use an
 
 
 
-
-
-
-Fossati & Tschofenig     Expires January 5, 2017                [Page 4]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 4]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
+
+   appropriately sized hash chain [Lamport] derived from the shared
+   secret and pick the next unused id on handover.
 
 4.  Diet DTLS Header
 
@@ -271,17 +274,16 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
    not symmetrical, that is: a server can't do the same.  The assumption
    made in [RFC6066] is that the server is never going to be a
    constrained device, and therefore doesn't need this facility.  CoAP
-   [RFC7252] breaks this expectation, by allowing any (constrained) node
-   to be at the same time client and server.  In such scenario, allowing
 
 
 
-
-Fossati & Tschofenig     Expires January 5, 2017                [Page 5]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 5]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
+   [RFC7252] breaks this expectation, by allowing any (constrained) node
+   to be at the same time client and server.  In such scenario, allowing
    a constrained server to advertise its Maximum Fragment Length would
    prove very useful.
 
@@ -324,19 +326,22 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
    Describe the fallback to normal operations in case server denies its
    consent to use the extension.
 
-7.  Acknowledgements
-
-   TODO
 
 
 
 
 
 
-Fossati & Tschofenig     Expires January 5, 2017                [Page 6]
+
+Fossati & Tschofenig     Expires January 6, 2017                [Page 6]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
+
+7.  Acknowledgements
+
+   Stephen Farrel for suggesting the use of hash chains to implement a
+   privacy-friendly SC-Id.
 
 8.  IANA Considerations
 
@@ -382,17 +387,20 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
               Williams, M. and J. Barrett, "Mobile DTLS", draft-barrett-
               mobile-dtls-00 (work in progress), March 2009.
 
+
+
+Fossati & Tschofenig     Expires January 6, 2017                [Page 7]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
    [I-D.ietf-dice-profile]
               Tschofenig, H. and T. Fossati, "TLS/DTLS Profiles for the
               Internet of Things", draft-ietf-dice-profile-17 (work in
               progress), October 2015.
 
-
-
-Fossati & Tschofenig     Expires January 5, 2017                [Page 7]
-
-Internet-Draft           DTLS Extensions for IoT               July 2016
-
+   [Lamport]  Lamport, L., "Password Authentication with Insecure
+              Communication", Commun. ACM, 1981.
 
    [OMA-LWM2M]
               Open Mobile Alliance, "Lightweight Machine to Machine
@@ -437,12 +445,4 @@ Authors' Addresses
 
 
 
-
-
-
-
-
-
-
-
-Fossati & Tschofenig     Expires January 5, 2017                [Page 8]
+Fossati & Tschofenig     Expires January 6, 2017                [Page 8]

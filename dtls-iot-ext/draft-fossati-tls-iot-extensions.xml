@@ -91,8 +91,8 @@
  +-----+-----+-------+ +-----+-----+ : +---------+-------+------
  | src | dst | proto | | src | dst | : | Seq#i   | SC-Id | ...
  +-----+-----+-------+ +-----+-----+ : +---------+-------+------
- `----------------+----------------' :           ^
-                   `................ : ..........'
+ `----------------+----------------' :              ^
+                   `................ : .............'
   <Handover event>                   :
                    GSM-SMS           : DTLS Record Header
                    +-------+-------+ : +---------+-------+-----
@@ -105,6 +105,7 @@
           </artwork>
         </figure>
         <t>An equivalent approach to support transparent handover of a DTLS session has been described in <xref target="I-D.barrett-mobile-dtls"/> and <xref target="Seggelmann"/>.</t>
+        <t>The privacy issue associated with the use of a stable clear-text identifier must be taken into consideration when defining the exact SC-Id format.  For example, client and server could use an appropriately sized hash chain <xref target="Lamport"/> derived from the shared secret and pick the next unused id on handover.</t>
       </section>
     </section>
     <section title="Diet DTLS Header" anchor="sec:diet">
@@ -146,7 +147,7 @@
       </section>
     </section>
     <section anchor="Acknowledgements" title="Acknowledgements">
-      <t>TODO</t>
+      <t>Stephen Farrel for suggesting the use of hash chains to implement a privacy-friendly SC-Id.</t>
     </section>
     <!-- Possibly a 'Contributors' section ... -->
     <section anchor="IANA" title="IANA Considerations">
@@ -200,9 +201,20 @@
         <date year="2016"/>
       </front>
       <seriesInfo name="TRON" value="workshop" />
-  </reference>
+    </reference>
 
-     <reference anchor="OMA-LWM2M" target="http://technical.openmobilealliance.org/Technical/Release_Program/docs/LightweightM2M/V1_0-20160407-C/OMA-TS-LightweightM2M-V1_0-20160407-C.pdf">
+    <reference anchor="Lamport">
+      <front>
+        <title>Password Authentication with Insecure Communication</title>
+        <author initials="L.L." surname="Lamport">
+          <organization/>
+        </author>
+        <date year="1981"/>
+      </front>
+      <seriesInfo name="Commun." value="ACM" />
+    </reference>
+
+    <reference anchor="OMA-LWM2M" target="http://technical.openmobilealliance.org/Technical/Release_Program/docs/LightweightM2M/V1_0-20160407-C/OMA-TS-LightweightM2M-V1_0-20160407-C.pdf">
       <front>
         <title>Lightweight Machine to Machine Technical Specification</title>
         <author>
