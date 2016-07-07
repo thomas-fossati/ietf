@@ -6,7 +6,9 @@ Internet Engineering Task Force                               T. Fossati
 Internet-Draft                                                     Nokia
 Updates: RFC6066 (if approved)                             H. Tschofenig
 Intended status: Standards Track                                     ARM
-Expires: January 6, 2017                                    July 5, 2016
+Expires: January 8, 2017                            N. Mavrogiannopoulos
+                                                                 Red Hat
+                                                            July 7, 2016
 
 
                         DTLS extensions for IoT
@@ -38,7 +40,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on January 6, 2017.
+   This Internet-Draft will expire on January 8, 2017.
 
 Copyright Notice
 
@@ -48,16 +50,16 @@ Copyright Notice
    This document is subject to BCP 78 and the IETF Trust's Legal
    Provisions Relating to IETF Documents
    (http://trustee.ietf.org/license-info) in effect on the date of
-   publication of this document.  Please review these documents
-   carefully, as they describe your rights and restrictions with respect
 
 
 
-Fossati & Tschofenig     Expires January 6, 2017                [Page 1]
+Fossati, et al.          Expires January 8, 2017                [Page 1]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
    to this document.  Code Components extracted from this document must
    include Simplified BSD License text as described in Section 4.e of
    the Trust Legal Provisions and are provided without warranty as
@@ -66,29 +68,29 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
-     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
    2.  Selective Fragment Retransmission . . . . . . . . . . . . . .   3
      2.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   3
      2.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   3
-   3.  Transport Agnostic Security Associations  . . . . . . . . . .   3
-     3.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   3
+   3.  Transport Agnostic Security Associations  . . . . . . . . . .   4
+     3.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   4
      3.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   4
-   4.  Diet DTLS Header  . . . . . . . . . . . . . . . . . . . . . .   5
-     4.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   5
-     4.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   5
-   5.  Server Maximum Fragment Length  . . . . . . . . . . . . . . .   5
-     5.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   5
-     5.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
-   6.  0-RTT Client Authentication . . . . . . . . . . . . . . . . .   6
-     6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
-     6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
-   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   7
-   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .   7
-     10.2.  Informative References . . . . . . . . . . . . . . . . .   7
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
+   4.  Diet DTLS Header  . . . . . . . . . . . . . . . . . . . . . .   6
+     4.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
+     4.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
+   5.  Server Maximum Fragment Length  . . . . . . . . . . . . . . .   6
+     5.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
+     5.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   7
+   6.  0-RTT Client Authentication . . . . . . . . . . . . . . . . .   7
+     6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   7
+     6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   7
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   8
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8
+   9.  Security Considerations . . . . . . . . . . . . . . . . . . .   8
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   8
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .   8
+     10.2.  Informative References . . . . . . . . . . . . . . . . .   8
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   9
 
 1.  Introduction
 
@@ -101,18 +103,22 @@ Table of Contents
    (D)TLS protocol and shall be realised using the extension framework
    defined in [RFC6066].
 
+
+
+
+
+
+
+Fossati, et al.          Expires January 8, 2017                [Page 2]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
 1.1.  Requirements Language
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
    document are to be interpreted as described in RFC 2119 [RFC2119].
-
-
-
-Fossati & Tschofenig     Expires January 6, 2017                [Page 2]
-
-Internet-Draft           DTLS Extensions for IoT               July 2016
-
 
 2.  Selective Fragment Retransmission
 
@@ -152,6 +158,18 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
    data in the current flight, together with the right-most received
    byte.
 
+
+
+
+
+
+
+
+Fossati, et al.          Expires January 8, 2017                [Page 3]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
+
+
 3.  Transport Agnostic Security Associations
 
 3.1.  Problem Statement
@@ -161,14 +179,17 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
    This implies that the associated DTLS context needs to be re-
    negotiated from scratch whenever the transport changes, e.g., when
-   moving the network attachment from GSM-SMS to IP (see [OMA-LWM2M]).
+   moving the network attachment from GSM-SMS to IP (see [OMA-LWM2M]),
+   or when the transport remains the same but client identifying address
+   changes (e.g., roaming resulting to different IP addresses on an IP
+   network).  Furthermore, that is relevant on IP networks utilizing NAT
+   devices which may modify the UDP port of a sender after some time
+   period is reached.
 
-
-
-Fossati & Tschofenig     Expires January 6, 2017                [Page 3]
-
-Internet-Draft           DTLS Extensions for IoT               July 2016
-
+   On such situations, there is not enough information in the DTLS
+   record header for a DTLS server, which handles multiple clients, to
+   associate the changed address to an existing client, without relying
+   on a re-handshake.
 
    In Low Power and Lossy Networks (LLNs), or in situations where one of
    the two parties is a constrained device, the DTLS handshake tends to
@@ -188,6 +209,21 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
    a secure context can be negotiated over a powerful media (e.g., UPD/
    IP over WLAN) and then reused over a less capable transport (GSM-SMS,
    802.15.4).
+
+
+
+
+
+
+
+
+
+
+
+
+Fossati, et al.          Expires January 8, 2017                [Page 4]
+
+Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
                                         00
@@ -211,6 +247,25 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
               Figure 1: Transparent handover of DTLS session
 
+   That approach modifies the DTLS Record header to the following
+   format.  That record format when negotiated becomes effective on the
+   next connection state, i.e., after the ChangeCipherSpec packets have
+   been sent.
+
+
+         struct {
+              ContentType type;
+              ProtocolVersion version;
+              uint16 epoch;
+              uint48 sequence_number;
+              uint32 SC-Id;                          // New field
+              uint16 length;
+              opaque fragment[DTLSPlaintext.length];
+         } DTLSPlaintext;
+
+
+                 Figure 2: The modified DTLS record format
+
    An equivalent approach to support transparent handover of a DTLS
    session has been described in [I-D.barrett-mobile-dtls] and
    [Seggelmann].
@@ -221,7 +276,8 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
 
-Fossati & Tschofenig     Expires January 6, 2017                [Page 4]
+
+Fossati, et al.          Expires January 8, 2017                [Page 5]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -277,7 +333,7 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
 
-Fossati & Tschofenig     Expires January 6, 2017                [Page 5]
+Fossati, et al.          Expires January 8, 2017                [Page 6]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -333,7 +389,7 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
 
-Fossati & Tschofenig     Expires January 6, 2017                [Page 6]
+Fossati, et al.          Expires January 8, 2017                [Page 7]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -389,7 +445,7 @@ Internet-Draft           DTLS Extensions for IoT               July 2016
 
 
 
-Fossati & Tschofenig     Expires January 6, 2017                [Page 7]
+Fossati, et al.          Expires January 8, 2017                [Page 8]
 
 Internet-Draft           DTLS Extensions for IoT               July 2016
 
@@ -436,13 +492,13 @@ Authors' Addresses
    Email: hannes.tschofenig@arm.com
 
 
+   Nikos Mavrogiannopoulos
+   Red Hat
+   Brno
+   Czech Republic
+
+   Email: nmav@redhat.com
 
 
 
-
-
-
-
-
-
-Fossati & Tschofenig     Expires January 6, 2017                [Page 8]
+Fossati, et al.          Expires January 8, 2017                [Page 9]
