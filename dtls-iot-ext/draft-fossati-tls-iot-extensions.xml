@@ -44,6 +44,17 @@
         <email>hannes.tschofenig@arm.com</email>
       </address>
     </author>
+    <author fullname="Nikos Mavrogiannopoulos" initials="N.M." surname="Mavrogiannopoulos">
+      <organization>Red Hat</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Brno</city>
+          <country>Czech Republic</country>
+        </postal>
+        <email>nmav@redhat.com</email>
+      </address>
+    </author>
     <date year="2016"/>
     <area>General</area>
     <workgroup>Internet Engineering Task Force</workgroup>
@@ -76,7 +87,8 @@
     <section title="Transport Agnostic Security Associations" anchor="sec:ta-sa">
       <section title="Problem Statement">
         <t>In DTLS, the security context demux is done via the 5-tuple that identifies the underlying transport instance.</t>
-        <t>This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the transport changes, e.g., when moving the network attachment from GSM-SMS to IP (see <xref target="OMA-LWM2M"/>).</t>
+        <t>This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the transport changes, e.g., when moving the network attachment from GSM-SMS to IP (see <xref target="OMA-LWM2M"/>), or when the transport remains the same but client identifying address changes (e.g., roaming resulting to different IP addresses on an IP network). Furthermore, that is relevant on IP networks utilizing NAT devices which may modify the UDP port of a sender after some time period is reached.</t>
+        <t>On such situations, there is not enough information in the DTLS record header for a DTLS server, which handles multiple clients, to associate the changed address to an existing client, without relying on a re-handshake.</t>
         <t>In Low Power and Lossy Networks (LLNs), or in situations where one of the two parties is a constrained device, the DTLS handshake tends to be expensive and fragile (see Section 11 of <xref target="I-D.ietf-dice-profile"/>).  When this is the case, its use should be limited to the strict necessary to preserve the security of the channel, avoiding extra work whenever possible.</t>
       </section>
       <section title="Proposal">
@@ -101,6 +113,22 @@
                                      :
                                      \/
                                      00
+            ]]>
+          </artwork>
+        </figure>
+        <t>That approach modifies the DTLS Record header to the following format. That record format when negotiated becomes effective on the next connection state, i.e., after the ChangeCipherSpec packets have been sent.</t>
+                <figure title="The modified DTLS record format" anchor="fig:record-format">
+          <artwork>
+            <![CDATA[
+      struct {
+           ContentType type;
+           ProtocolVersion version;
+           uint16 epoch;
+           uint48 sequence_number;
+           uint32 SC-Id;                          // New field
+           uint16 length;
+           opaque fragment[DTLSPlaintext.length];
+      } DTLSPlaintext;
             ]]>
           </artwork>
         </figure>
