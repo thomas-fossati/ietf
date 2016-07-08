@@ -60,7 +60,7 @@
     <workgroup>Internet Engineering Task Force</workgroup>
     <keyword>DTLS, TLS, Internet of Things, IoT, TLS extensions</keyword>
     <abstract>
-      <t>Internet protocols work well in a variety of environments, including Internet of Things (IoT) deployments. While there are some optimization possibilities to reduce code size, bandwidth utilization, and to improve battery lifetime in general most Internet protocols are also applicable to constrained environments. TLS and DTLS are two such security protocols that can be used by many IoT devices since DTLS/TLS provide lot of flexiblity in terms credential choice, ciphersuite usage, etc. The DICE working group has developed a specification that profiles the use of TLS and DTLS for IoT environments, without changing the TLS/DTLS specifications.</t>
+      <t>Internet protocols work well in a variety of environments, including Internet of Things (IoT) deployments. While there are some optimization possibilities to reduce code size, bandwidth utilization, and to improve battery lifetime, in general most Internet protocols are also applicable to constrained environments. TLS and DTLS are two such security protocols that can be used by many IoT devices since DTLS/TLS provide lot of flexiblity in terms credential choice, ciphersuite usage, etc. The DICE working group has developed a specification that profiles the use of TLS and DTLS for IoT environments, without changing the TLS/DTLS specifications.</t>
 
 <t>This memo goes a step further and proposes changes to the DTLS/TLS protocol to introduce further optimizations. Since the ongoing work on TLS/DTLS 1.3 already offers several improvements (compared to previous versions) this document focuses on the use of version 1.3 and suggests further optimizations.</t>
 
@@ -68,11 +68,11 @@
   </front>
   <middle>
     <section title="Introduction">
- <t>Internet protocols work well in a variety of environments, including Internet of Things (IoT) deployments. While there are some optimization possibilities to reduce code size, bandwidth utilization, and to improve battery lifetime in general most Internet protocols are also applicable to constrained environments. TLS and DTLS are two such security protocols that can be used by many IoT devices since DTLS/TLS provide lot of flexiblity in terms credential choice, ciphersuite usage, etc. The DICE working group has developed a specification that profiles the use of TLS and DTLS for IoT environments, without changing the TLS/DTLS specifications.</t>
+ <t>Internet protocols work well in a variety of environments, including Internet of Things (IoT) deployments. While there are some optimization possibilities to reduce code size, bandwidth utilization, and to improve battery lifetime, in general most Internet protocols are also applicable to constrained environments. TLS and DTLS are two such security protocols that can be used by many IoT devices since DTLS/TLS provide lot of flexiblity in terms credential choice, ciphersuite usage, etc. The DICE working group has developed a specification that profiles the use of TLS and DTLS for IoT environments, without changing the TLS/DTLS specifications.</t>
 
 <t>This memo goes a step further and proposes changes to the DTLS/TLS protocol to introduce further optimizations. Since the ongoing work on TLS/DTLS 1.3 <xref target="I-D.ietf-tls-tls13"/> already offers several improvements (compared to previous versions) this document focuses on the use of version 1.3 and suggests further optimizations.</t>
 
-<t>This document discusses four extensions, namely 
+<t>This document discusses four extensions, namely: 
 <list style="hanging">
 
 <t hangText="Selective Fragment Retransmission:"> This extension improves retransmissions of lost handshake packets.</t>
@@ -92,7 +92,7 @@
     <?rfc needLines="8" ?>
     <section title="Selective Fragment Retransmission" anchor="sec:snack">
       <section title="Problem Statement">
-        <t>The unit of retransmission used by the DTLS handshake is a whole flight (see Section 4.2.4 of <xref target="RFC6347" />. If the underlying media is inherently lossy, or shows high latency variance that might fire spurious retransmission, a single fragment that gets lost or is excessively delayed will force the whole flight to be retransmitted .</t>
+        <t>The unit of retransmission used by the DTLS handshake is a whole flight (see Section 4.2.4 of <xref target="RFC6347" />. If the underlying media is inherently lossy, or shows high latency variance that might fire spurious retransmission, a single fragment that gets lost or is excessively delayed will force the whole flight to be retransmitted.</t>
         <t>This is further exacerbated when the effective MTU is very low and therefore handshake messages have higher probability to be fragmented.  For example, IEEE 802.15.4 networks have a 128-byte MTU size. In such an environment a very "ordinary" TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA negotiation can take up to 30 individual fragments, 2/3 of which are sent in flight 4.  The loss of a single fragment in flight 4 implies a retransmission that is 20x the magnitude of the original loss.</t>
         <t>The retransmission timer settings suggested in Section 11 of <xref target="I-D.ietf-dice-profile"/> offer mitigation for the spurious retransmit issue and, in general, help with congestion. However, they do not solve the retransmission of the entire flight. </t>
       </section>
@@ -102,12 +102,13 @@
     </section>
     <section title="Transport Agnostic Security Associations" anchor="sec:ta-sa">
       <section title="Problem Statement">
-        <t>In DTLS, the security context demultiplexing is done via the 5-tuple. This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the IP address changes. For example, when moving the network attachment from WLAN to a cellular connection, or when the IP address of the IoT devices changes during a sleep cyle. A NAT device may also modify the source UDP port after some a longer idle period.</t>
-        <t>On such situations, there is not enough information in the DTLS record header for a DTLS server, which handles multiple clients, to associate the changed address to an existing client without relying on a re-handshake.</t>
-        <t>In Low Power and Lossy Networks (LLNs), or in situations where one of the two parties is a constrained device, the DTLS handshake tends to be expensive and fragile (see Section 11 of <xref target="I-D.ietf-dice-profile"/>).</t>
+        <t>In DTLS, the security context demultiplexing is done via the 5-tuple. This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the IP address changes. For example, when moving the network attachment from WLAN to a cellular connection, or when the IP address of the IoT devices changes during a sleep cyle. A NAT device may also modify the source UDP port after an idle period.  In such situations, there is not enough information in the DTLS record header for a DTLS server, which handles multiple clients, to associate the changed address to an existing client.</t>
+        <!--
+        <t>In Low Power and Lossy Networks (LLNs), or in situations where one of the two parties is a constrained device, the DTLS handshake tends to be expensive and fragile (see Section 11 of <xref target="I-D.ietf-dice-profile"/>).  When this is the case, its use should be limited to the strict necessary to preserve the security of the channel, avoiding extra work whenever possible.</t>
+        -->
       </section>
       <section title="Proposal">
-        <t>A potential solution is to add the ability to negotiate, at handshake time, a transport independent identifier that is unique per security association. We call this identifier the 'Connection ID (CID)' in <xref target="fig:scid"/>. It allows to decouple the DTLS session from the underlying transport protocol allowing the same DTLS security association to be migrated.</t>
+        <t>A potential solution is to add the ability to negotiate, at handshake time, a transport independent identifier that is unique per security association. We call this identifier the 'Connection ID (CID)' in <xref target="fig:scid"/>. It decouples the DTLS session from the underlying transport protocol allowing the same DTLS security association to be migrated across different transport sessions.</t>
         <figure title="Transparent Handover of DTLS Session" anchor="fig:scid">
           <artwork>
             <![CDATA[
@@ -153,7 +154,7 @@
     </section>
     <section title="Reducing the DTLS Record Layer Header Overhead" anchor="sec:diet">
       <section title="Problem Statement">
-        <t>The DTLS record layer header adds 13 bytes of overhead, as described in Appendix B of <xref target="I-D.ietf-dice-profile"/>. While some of the information carried in the header is unavoidable there are other parameters that are redundant and included for backwards compatibility reasons. This burden becomes quite substantial in networks with small frame sizes (e.g., low power wide area networks).</t>
+        <t>The DTLS record layer header adds 13 bytes of overhead, as described in Appendix B of <xref target="I-D.ietf-dice-profile"/>. While some of the information carried in the header is unavoidable, other parameters are redundant and included for backwards compatibility reasons. This burden becomes quite substantial in networks with small frame sizes (e.g., low power wide area networks).</t>
         <t>Overhead that is not strictly needed could be removed to allow applications to transmit more data in a single packet or to make space for other DTLS features, such as the proposal described in <xref target="sec:ta-sa"/>.</t>
       </section>
       <section title="Proposal">
@@ -170,7 +171,7 @@
     </section>
     <section title="Reducing Buffers" anchor="sec:server-mfl">
       <section title="Problem Statement">
-        <t>The Maximum Fragment Length extension <xref target="RFC6066"/> allows a client with limited buffer space to specify a different (smaller) maximum size for fragments that the server is allowed to send.  The mechanism is not symmetrical: a server cannot state their buffer size.  The assumption made in <xref target="RFC6066"/> is that the server is never going to be a constrained device, and therefore does not need such a capability. While this may be true for many IoT deployments where the TLS client is implemented in an IoT device that connects to a server on the Internet that does not have memory limitations, such as a server in the cloud. However, with the desire to also deploy CoAPS and HTTPS-based servers in IoT devices that respond to requests a constrained node may also need to run a DTLS/TLS server. In such a  scenario, allowing a constrained server to advertise its Maximum Fragment Length helps to lower memory requirements.</t>
+        <t>The Maximum Fragment Length extension <xref target="RFC6066"/> allows a client with limited buffer space to specify a different (smaller) maximum size for fragments that the server is allowed to send.  The mechanism is not symmetrical: a server cannot state their buffer size.  The assumption made in <xref target="RFC6066"/> is that the server is never going to be a constrained device, and therefore does not need such a capability. This may be true for many IoT deployments where the TLS client is implemented in an IoT device that connects to a server on the Internet that does not have memory limitations, such as a server in the cloud. However, with the desire to also deploy CoAPS and HTTPS-based servers in IoT devices, a constrained node may also need to run a DTLS/TLS server. In such a  scenario, allowing a constrained server to advertise its Maximum Fragment Length helps to lower memory requirements.</t>
       </section>
       <section title="Proposal">
         <t>The semantics of the max_fragment_length extension could be modified to allow the server as well as the client to express their buffer sizes. </t>
