@@ -5,10 +5,10 @@
 Internet Engineering Task Force                               T. Fossati
 Internet-Draft                                                     Nokia
 Intended status: Informational                             H. Tschofenig
-Expires: January 9, 2017                                             ARM
+Expires: May 8, 2017                                                 ARM
                                                     N. Mavrogiannopoulos
                                                                  Red Hat
-                                                            July 8, 2016
+                                                        November 4, 2016
 
 
        TLS/DTLS Optimizations for Internet of Things Deployments
@@ -48,14 +48,14 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on January 9, 2017.
+   This Internet-Draft will expire on May 8, 2017.
 
 
 
 
-Fossati, et al.          Expires January 9, 2017                [Page 1]
+Fossati, et al.            Expires May 8, 2017                  [Page 1]
 
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
 
 
 Copyright Notice
@@ -83,18 +83,18 @@ Table of Contents
    4.  Transport Agnostic Security Associations  . . . . . . . . . .   4
      4.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   4
      4.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   4
-   5.  Reducing the DTLS Record Layer Header Overhead  . . . . . . .   6
-     5.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
-     5.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   6
-   6.  Reducing Buffers  . . . . . . . . . . . . . . . . . . . . . .   6
-     6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   6
-     6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   7
-   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   7
-   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
-   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
-     9.1.  Normative References  . . . . . . . . . . . . . . . . . .   7
-     9.2.  Informative References  . . . . . . . . . . . . . . . . .   7
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
+   5.  Reducing the DTLS Record Layer Header Overhead  . . . . . . .   7
+     5.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   7
+     5.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   7
+   6.  Reducing Buffers  . . . . . . . . . . . . . . . . . . . . . .   8
+     6.1.  Problem Statement . . . . . . . . . . . . . . . . . . . .   8
+     6.2.  Proposal  . . . . . . . . . . . . . . . . . . . . . . . .   8
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   8
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   8
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   8
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .   8
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .   9
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   9
 
 1.  Introduction
 
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Fossati, et al.          Expires January 9, 2017                [Page 2]
+Fossati, et al.            Expires May 8, 2017                  [Page 2]
 
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
 
 
    has developed a specification that profiles the use of TLS and DTLS
@@ -165,9 +165,9 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
 
 
 
-Fossati, et al.          Expires January 9, 2017                [Page 3]
+Fossati, et al.            Expires May 8, 2017                  [Page 3]
 
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
 
 
    The retransmission timer settings suggested in Section 11 of
@@ -190,24 +190,25 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
 
 4.1.  Problem Statement
 
-   In DTLS, the security context demultiplexing is done via the 5-tuple.
-   This implies that the associated DTLS context needs to be re-
-   negotiated from scratch whenever the IP address changes.  For
-   example, when moving the network attachment from WLAN to a cellular
-   connection, or when the IP address of the IoT devices changes during
-   a sleep cyle.  A NAT device may also modify the source UDP port after
-   an idle period.  In such situations, there is not enough information
-   in the DTLS record header for a DTLS server, which handles multiple
-   clients, to associate the changed address to an existing client.
+   In DTLS, the security context demultiplexing is done via the TCP/IP
+   5-tuple.  This implies that the associated DTLS context needs to be
+   re-negotiated from scratch whenever the IP address or port changes.
+   For example, when moving the network attachment from WLAN to a
+   cellular connection, or when the IP address of the IoT devices
+   changes during a sleep cyle.  A NAT device may also modify the source
+   UDP port after an idle period.  In such situations, there is not
+   enough information in the DTLS record header for a DTLS server, which
+   handles multiple clients, to associate the changed address to an
+   existing client.
 
 4.2.  Proposal
 
-   A potential solution is to add the ability to negotiate, at handshake
-   time, a transport independent identifier that is unique per security
-   association.  We call this identifier the 'Connection ID (CID)' in
-   Figure 1.  It decouples the DTLS session from the underlying
-   transport protocol allowing the same DTLS security association to be
-   migrated across different transport sessions.
+   A solution is to negotiate, at handshake time, a transport
+   independent identifier that is unique per security association.  We
+   call this identifier the 'Connection ID (cid)' in Figure 1.  It
+   decouples the DTLS session from the underlying transport protocol
+   allowing the same DTLS security association to be migrated across
+   different transport sessions.
 
 
 
@@ -220,10 +221,9 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
 
 
 
-
-Fossati, et al.          Expires January 9, 2017                [Page 4]
+Fossati, et al.            Expires May 8, 2017                  [Page 4]
 
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
 
 
                                         00
@@ -231,14 +231,14 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
                                         :
     IP                    UDP           : DTLS Record Header
     +-----+-----+-------+ +-----+-----+ : +---------+-------+------
-    | src | dst | proto | | src | dst | : | Seq#i   |  CID  | ...
+    | src | dst | proto | | src | dst | : | Seq#i   |  cid  | ...
     +-----+-----+-------+ +-----+-----+ : +---------+-------+------
     `----------------+----------------' :              ^
                       `................ : .............'
      <Handover event>                   :
                       GSM-SMS           : DTLS Record Header
                       +-------+-------+ : +---------+-------+-----
-                      | tp-oa | tp-da | : | Seq#i+1 |  CID  | ...
+                      | tp-oa | tp-da | : | Seq#i+1 |  cid  | ...
                       +-------+-------+ : +---------+-------+-----
                                         :
                                         \/
@@ -251,36 +251,110 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
    described in Figure 2.
 
 
-        struct {
-             ContentType type;
-             ProtocolVersion version;
-             uint16 epoch;
-             uint48 sequence_number;
-             uint32 connection_id;                          // New field
-             uint16 length;
-             opaque fragment[DTLSPlaintext.length];
-        } DTLSPlaintext;
+         struct {
+              ContentType type;
+              ProtocolVersion version;
+              uint16 epoch;
+              uint48 sequence_number;
+              uint32 cid;                          // New field
+              uint16 length;
+              select (CipherSpec.cipher_type) {
+                case block:  GenericBlockCipher;
+                case aead:   GenericAEADCipher;
+              } fragment;
+         } DTLSCiphertext;
 
 
                    Figure 2: Modified DTLS Record Format
 
+   In order to negotiate a Transport Agnostic Security Association,
+   clients include an extension of type "ta_sa" in the (extended) client
+   hello.  The "extension_data" field of this extension SHALL contain
+   the following ClientSecAssocData structure.
+
+
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                  [Page 5]
+
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
+
+
+         enum {
+             fixed(0), hotp(1), (255)
+         } SecAssocType;
+
+         struct {
+              SecAssocType types<1..2^8-1>;
+         } ClientSecAssocData;
+
+
+   In the case of the fixed(0) type, the cid of the packets after
+   ChangeCipherSpec is sent explicitly by the server.
+
+   In the case of hotp(1) option the initial 'cid' is is calculated
+   using the HOTP algorithm ([RFC4226]) as follows.
+
+   o  A 20-byte string is generated [RFC5705] exporter.  The key
+      material exporter uses the label "EXPORTER-ta-security-
+      association-hotp" without the quotes, and without any context
+      value.
+
+   o  The initial 'cid' equals to the first HOTP value (i.e., the 31-bit
+      value of Sbits in [RFC4226] notation), as generated by using the
+      previously exported value as K.
+
+   Subsequent values of the HOTP algorithm can be used in place of the
+   initial, as long as they fall into the negotiated window_size (see
+   below).
+
+   Servers that receive an extended hello containing a "ta_sa" extension
+   MAY agree to use a Transport Agnostic Security Association by
+   including an extension of type "ta_sa", with "extension_data" being
+   ServerSecAssocData, in the extended server hello.
+
+
+         struct {
+              SecAssocType type;
+              select (type) {
+                  case fixed:
+                      struct {
+                          uint32 cid_value;
+                      };
+                  case hotp:
+                      struct {
+                          uint16 window_size;
+                      };
+              };
+         } ServerSecAssocData;
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                  [Page 6]
+
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
+
+
+   In the case of the fixed(0) type, the cid_value contains the value to
+   be used as 'cid'.  In the case of hotp(1), the window_size must be
+   greater or equal to 1, and indicates the number of HOTP values that
+   the server can recognize for this particular client.
+
+   In both server and client the DTLSCiphertext format does change after
+   the DTLS connection state is updated; i.e., for the sending sides,
+   after the ChangeCipherSpec messages are sent.  For receiving sides,
+   after the ChangeCipherSpec is received.  The DTLSCiphertext format is
+   changed for both the client and the server.  However, only a client
+   can initiate a switch to an unused 'cid' value; a server MUST utilize
+   the same value seen on the last valid message received by the client.
+   A server which receives a 'cid' value which is not expected (e.g., a
+   value outside its advertised window) MAY ignore the packet.
+
    A similar approach to support transparent handover of a DTLS session
    has been described in [I-D.barrett-mobile-dtls] and [Seggelmann].
-
-   The privacy issue associated with the use of a long-term identifier
-   must be taken into consideration.  For example, client and server
-   could use a hash chain [Lamport] derived from the shared secret and
-   pick the next unused id on handover.
-
-
-
-
-
-
-Fossati, et al.          Expires January 9, 2017                [Page 5]
-
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
-
 
 5.  Reducing the DTLS Record Layer Header Overhead
 
@@ -310,6 +384,16 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
       record layer header field.  This leads to a duplication of 8-bytes
       per record.
 
+
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                  [Page 7]
+
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
+
+
 6.  Reducing Buffers
 
 6.1.  Problem Statement
@@ -328,15 +412,6 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
    a DTLS/TLS server.  In such a scenario, allowing a constrained server
    to advertise its Maximum Fragment Length helps to lower memory
    requirements.
-
-
-
-
-
-Fossati, et al.          Expires January 9, 2017                [Page 6]
-
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
-
 
 6.2.  Proposal
 
@@ -362,13 +437,32 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
 
    [I-D.ietf-tls-tls13]
               Rescorla, E., "The Transport Layer Security (TLS) Protocol
-              Version 1.3", draft-ietf-tls-tls13-13 (work in progress),
-              May 2016.
+              Version 1.3", draft-ietf-tls-tls13-18 (work in progress),
+              October 2016.
+
+
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                  [Page 8]
+
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
+
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <http://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC4226]  M'Raihi, D., Bellare, M., Hoornaert, F., Naccache, D., and
+              O. Ranen, "HOTP: An HMAC-Based One-Time Password
+              Algorithm", RFC 4226, DOI 10.17487/RFC4226, December 2005,
+              <http://www.rfc-editor.org/info/rfc4226>.
+
+   [RFC5705]  Rescorla, E., "Keying Material Exporters for Transport
+              Layer Security (TLS)", RFC 5705, DOI 10.17487/RFC5705,
+              March 2010, <http://www.rfc-editor.org/info/rfc5705>.
 
    [RFC6066]  Eastlake 3rd, D., "Transport Layer Security (TLS)
               Extensions: Extension Definitions", RFC 6066,
@@ -385,22 +479,10 @@ Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
               Williams, M. and J. Barrett, "Mobile DTLS", draft-barrett-
               mobile-dtls-00 (work in progress), March 2009.
 
-
-
-
-
-Fossati, et al.          Expires January 9, 2017                [Page 7]
-
-Internet-Draft       DTLS/TLS Optimizations for IoT            July 2016
-
-
    [I-D.ietf-dice-profile]
               Tschofenig, H. and T. Fossati, "TLS/DTLS Profiles for the
               Internet of Things", draft-ietf-dice-profile-17 (work in
               progress), October 2015.
-
-   [Lamport]  Lamport, L., "Password Authentication with Insecure
-              Communication", Commun. ACM, 1981.
 
    [Seggelmann]
               Seggelmann, R., Tuexen, M., and E. Rathgeb, "DTLS
@@ -414,6 +496,14 @@ Authors' Addresses
    UK
 
    Email: thomas.fossati@nokia.com
+
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                  [Page 9]
+
+Internet-Draft       DTLS/TLS Optimizations for IoT        November 2016
 
 
    Hannes Tschofenig
@@ -445,4 +535,26 @@ Authors' Addresses
 
 
 
-Fossati, et al.          Expires January 9, 2017                [Page 8]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Fossati, et al.            Expires May 8, 2017                 [Page 10]

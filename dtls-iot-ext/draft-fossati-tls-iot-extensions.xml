@@ -4,6 +4,9 @@
 <!ENTITY RFC3552 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3552.xml">
 <!ENTITY RFC6347 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6347.xml">
 <!ENTITY RFC6066 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6066.xml">
+<!ENTITY RFC4226 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4226.xml">
+<!ENTITY RFC5705 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5705.xml">
+
 <!-- <!ENTITY RFC7252 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7252.xml"> --> 
 <!ENTITY I-D.ietf-dice-profile SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-dice-profile.xml">
 <!ENTITY I-D.barrett-mobile-dtls SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.barrett-mobile-dtls.xml">
@@ -102,13 +105,13 @@
     </section>
     <section title="Transport Agnostic Security Associations" anchor="sec:ta-sa">
       <section title="Problem Statement">
-        <t>In DTLS, the security context demultiplexing is done via the 5-tuple. This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the IP address changes. For example, when moving the network attachment from WLAN to a cellular connection, or when the IP address of the IoT devices changes during a sleep cyle. A NAT device may also modify the source UDP port after an idle period.  In such situations, there is not enough information in the DTLS record header for a DTLS server, which handles multiple clients, to associate the changed address to an existing client.</t>
+        <t>In DTLS, the security context demultiplexing is done via the TCP/IP 5-tuple. This implies that the associated DTLS context needs to be re-negotiated from scratch whenever the IP address or port changes. For example, when moving the network attachment from WLAN to a cellular connection, or when the IP address of the IoT devices changes during a sleep cyle. A NAT device may also modify the source UDP port after an idle period.  In such situations, there is not enough information in the DTLS record header for a DTLS server, which handles multiple clients, to associate the changed address to an existing client.</t>
         <!--
         <t>In Low Power and Lossy Networks (LLNs), or in situations where one of the two parties is a constrained device, the DTLS handshake tends to be expensive and fragile (see Section 11 of <xref target="I-D.ietf-dice-profile"/>).  When this is the case, its use should be limited to the strict necessary to preserve the security of the channel, avoiding extra work whenever possible.</t>
         -->
       </section>
       <section title="Proposal">
-        <t>A potential solution is to add the ability to negotiate, at handshake time, a transport independent identifier that is unique per security association. We call this identifier the 'Connection ID (CID)' in <xref target="fig:scid"/>. It decouples the DTLS session from the underlying transport protocol allowing the same DTLS security association to be migrated across different transport sessions.</t>
+        <t>A solution is to negotiate, at handshake time, a transport independent identifier that is unique per security association. We call this identifier the 'Connection ID (cid)' in <xref target="fig:scid"/>. It decouples the DTLS session from the underlying transport protocol allowing the same DTLS security association to be migrated across different transport sessions.</t>
         <figure title="Transparent Handover of DTLS Session" anchor="fig:scid">
           <artwork>
             <![CDATA[
@@ -117,14 +120,14 @@
                                      :
  IP                    UDP           : DTLS Record Header
  +-----+-----+-------+ +-----+-----+ : +---------+-------+------
- | src | dst | proto | | src | dst | : | Seq#i   |  CID  | ...
+ | src | dst | proto | | src | dst | : | Seq#i   |  cid  | ...
  +-----+-----+-------+ +-----+-----+ : +---------+-------+------
  `----------------+----------------' :              ^
                    `................ : .............'
   <Handover event>                   :
                    GSM-SMS           : DTLS Record Header
                    +-------+-------+ : +---------+-------+-----
-                   | tp-oa | tp-da | : | Seq#i+1 |  CID  | ...
+                   | tp-oa | tp-da | : | Seq#i+1 |  cid  | ...
                    +-------+-------+ : +---------+-------+-----
                                      :
                                      \/
@@ -141,15 +144,66 @@
            ProtocolVersion version;
            uint16 epoch;
            uint48 sequence_number;
-           uint32 connection_id;                          // New field
+           uint32 cid;                          // New field
            uint16 length;
-           opaque fragment[DTLSPlaintext.length];
-      } DTLSPlaintext;
+           select (CipherSpec.cipher_type) {
+             case block:  GenericBlockCipher;
+             case aead:   GenericAEADCipher;
+           } fragment;
+      } DTLSCiphertext;
             ]]>
           </artwork>
         </figure>
-        <t>A similar approach to support transparent handover of a DTLS session has been described in <xref target="I-D.barrett-mobile-dtls"/> and <xref target="Seggelmann"/>.</t>
-        <t>The privacy issue associated with the use of a long-term identifier must be taken into consideration.  For example, client and server could use a hash chain <xref target="Lamport"/> derived from the shared secret and pick the next unused id on handover.</t>
+        <t>
+           In order to negotiate a Transport Agnostic Security Association, clients include an extension of type "ta_sa" in the (extended) client hello.  The "extension_data" field of this extension SHALL contain the following ClientSecAssocData structure.</t>
+<figure>
+<artwork>
+            <![CDATA[
+      enum {
+          fixed(0), hotp(1), (255)
+      } SecAssocType;
+      
+      struct {
+           SecAssocType types<1..2^8-1>;
+      } ClientSecAssocData;
+            ]]>
+</artwork>
+</figure>
+	<t>In the case of the fixed(0) type, the cid of the packets after ChangeCipherSpec is sent explicitly by the server.</t>
+        <t>In the case of hotp(1) option the initial 'cid' is is calculated using the HOTP algorithm (<xref target="RFC4226"/>) as follows.
+          <list style="symbols">
+            <t>A 20-byte string is generated <xref target="RFC5705"/> exporter.  The key material exporter uses the label "EXPORTER-ta-security-association-hotp" without the quotes, and without any
+   context value.</t>
+            <t>The initial 'cid' equals to the first HOTP value (i.e., the 31-bit value of Sbits in <xref target="RFC4226"/> notation), as generated by using the previously exported value as K.</t>
+          </list>
+        Subsequent values of the HOTP algorithm can be used in place of the initial, as long as they fall into the negotiated window_size (see below).
+        </t>
+        <t>
+        Servers that receive an extended hello containing a "ta_sa" extension MAY agree to use a Transport Agnostic Security Association by including an extension of type "ta_sa", with "extension_data" being ServerSecAssocData, in the extended server hello.
+        </t>
+<figure>
+<artwork>
+            <![CDATA[
+      struct {
+           SecAssocType type;
+           select (type) {
+               case fixed:
+                   struct {
+                       uint32 cid_value;
+                   };
+               case hotp:
+                   struct {
+                       uint16 window_size;
+                   };
+           };
+      } ServerSecAssocData;
+            ]]>
+</artwork>
+</figure>
+        <t>In the case of the fixed(0) type, the cid_value contains the value to be used as 'cid'. In the case of hotp(1), the window_size must be greater or equal to 1, and indicates the number of HOTP values that the server can recognize for this particular client.</t>
+        <t>In both server and client the DTLSCiphertext format does change after the DTLS connection state is updated; i.e., for the sending sides, after the ChangeCipherSpec messages are sent. For receiving sides, after the ChangeCipherSpec is received. The DTLSCiphertext format is changed for both the client and the server. However, only a client can initiate a switch to an unused 'cid' value; a server MUST utilize the same value seen on the last valid message received by the client. A server which receives a 'cid' value which is not expected (e.g., a value outside its advertised window) MAY ignore the packet.</t>
+        <t>A similar approach to support transparent handover of a DTLS session has been described in <xref target="I-D.barrett-mobile-dtls"/> and <xref target="Seggelmann"/>.
+        </t>
       </section>
     </section>
     <section title="Reducing the DTLS Record Layer Header Overhead" anchor="sec:diet">
@@ -206,6 +260,8 @@
      &RFC2119;
      &RFC6347;
      &RFC6066;
+     &RFC4226;
+     &RFC5705;
      &I-D.ietf-tls-tls13;
     </references>
     <references title="Informative References">
@@ -248,16 +304,6 @@
       <seriesInfo name="TRON" value="workshop" />
     </reference>
 --> 
-    <reference anchor="Lamport">
-      <front>
-        <title>Password Authentication with Insecure Communication</title>
-        <author initials="L.L." surname="Lamport">
-          <organization/>
-        </author>
-        <date year="1981"/>
-      </front>
-      <seriesInfo name="Commun." value="ACM" />
-    </reference>
 
 <!-- 
     <reference anchor="OMA-LWM2M" target="http://technical.openmobilealliance.org/Technical/Release_Program/docs/LightweightM2M/V1_0-20160407-C/OMA-TS-LightweightM2M-V1_0-20160407-C.pdf">
